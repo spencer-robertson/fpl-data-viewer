@@ -5,6 +5,7 @@ import aiohttp
 import asyncio
 from time import time
 import sys
+import os
 
 # Alot of this code is inspired https://towardsdatascience.com/fantasy-premier-league-value-analysis-python-tutorial-using-the-fpl-api-8031edfe9910
 # Big thanks to David Allen for the tutorials. This script is simply adding extra data on top of the original post above.
@@ -63,7 +64,7 @@ def progress(count, total, status=''):
     sys.stdout.write(' ' * 100 + '\r')
 
     # Writing then flushing the progress bar
-    sys.stdout.write('[%s] %s%s ...%s\r\r' % (bar, percents, '%', status))
+    sys.stdout.write('[%s] %s%s - %s\r' % (bar, percents, '%', status))
     sys.stdout.flush()
 
 async def get_player_info(session, url, current_index, name):
@@ -113,14 +114,14 @@ async def main():
                 if(position == 'Defender' or
                    position == 'Goalkeeper'):
                     if(next_game_is_home):
-                        player_info['next_opposition_difficulty'] = team_info['strength_attack_away'].values
+                        player_info['opposition_position_difficulty'] = team_info['strength_attack_away'].values
                     else:
-                        player_info['next_opposition_difficulty'] = team_info['strength_attack_home'].values
+                        player_info['opposition_position_difficulty'] = team_info['strength_attack_home'].values
                 else:
                     if(next_game_is_home):
-                        player_info['next_opposition_difficulty'] = team_info['strength_defence_away'].values
+                        player_info['opposition_position_difficulty'] = team_info['strength_defence_away'].values
                     else:
-                        player_info['next_opposition_difficulty'] = team_info['strength_defence_home'].values
+                        player_info['opposition_position_difficulty'] = team_info['strength_defence_home'].values
 
                 # Updating the db with new values
                 slim_elements_df.loc[slim_elements_df.id ==
@@ -128,6 +129,14 @@ async def main():
 
 
 def export():
+    # You should change 'test' to your preferred folder.
+    export_dir = ("exports")
+    check_folder = os.path.isdir(export_dir)
+
+    # If folder doesn't exist, then create it.
+    if not check_folder:
+        os.makedirs(export_dir)
+
     # Ordering by value for price
     value_for_price = slim_elements_df.sort_values('value', ascending=False)
 
@@ -150,13 +159,13 @@ def export():
                                    'Goalkeeper'].sort_values('value', ascending=False)
 
     # Converting DBs to CSV
-    value_for_price.to_csv('~/Documents/FPL/data/all_fpl_data.csv')
-    position_pivot.to_csv('~/Documents/FPL/data/position_fpl_data.csv')
-    team_pivot.to_csv('~/Documents/FPL/data/team_fpl_data.csv')
-    goal_df.to_csv('~/Documents/FPL/data/goal_fpl_data.csv')
-    def_df.to_csv('~/Documents/FPL/data/def_fpl_data.csv')
-    mid_df.to_csv('~/Documents/FPL/data/mid_fpl_data.csv')
-    fwd_df.to_csv('~/Documents/FPL/data/fwd_fpl_data.csv')
+    value_for_price.to_csv(f'{export_dir}/all_fpl_data.csv')
+    position_pivot.to_csv(f'{export_dir}/position_fpl_data.csv')
+    team_pivot.to_csv(f'{export_dir}/team_fpl_data.csv')
+    goal_df.to_csv(f'{export_dir}/goal_fpl_data.csv')
+    def_df.to_csv(f'{export_dir}/def_fpl_data.csv')
+    mid_df.to_csv(f'{export_dir}/mid_fpl_data.csv')
+    fwd_df.to_csv(f'{export_dir}/fwd_fpl_data.csv')
 
 
 if __name__ == '__main__':
